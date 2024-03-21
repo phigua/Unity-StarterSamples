@@ -24,6 +24,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Assertions;
+using UnityEngine.XR;
+//using UnityEngine.XR.Interaction.Toolkit;
 
 namespace OculusSampleFramework
 {
@@ -46,6 +48,11 @@ namespace OculusSampleFramework
         private GameObject _rightSkeletonVisual = null;
         private float _currentHandAlpha = 1.0f;
         private int HandAlphaId = Shader.PropertyToID("_HandAlpha");
+
+        public float minResolution = 0.2f;
+        public float maxResolution = 2.0f;
+        public float resolutionStep = 0.1f;
+        private float currentResolution = 1.0f;
 
         public enum HandsVisualMode
         {
@@ -143,6 +150,7 @@ namespace OculusSampleFramework
             _leftMeshRenderer = LeftHand.GetComponent<SkinnedMeshRenderer>();
             _rightMeshRenderer = RightHand.GetComponent<SkinnedMeshRenderer>();
             StartCoroutine(FindSkeletonVisualGameObjects());
+            OVRManager.fixedFoveatedRenderingLevel = OVRManager.FixedFoveatedRenderingLevel.Off;
         }
 
         private void Update()
@@ -163,6 +171,36 @@ namespace OculusSampleFramework
 
             _rightMeshRenderer.sharedMaterial.SetFloat(HandAlphaId, _currentHandAlpha);
             _leftMeshRenderer.sharedMaterial.SetFloat(HandAlphaId, _currentHandAlpha);
+            if (OVRInput.GetDown(OVRInput.Button.One))
+            {
+                IncreaseResolution();
+            }
+            else if (OVRInput.GetDown(OVRInput.Button.Two))
+            {
+                DecreaseResolution();
+            }
+        }
+        void IncreaseResolution()
+        {
+            currentResolution += resolutionStep;
+            if (currentResolution > maxResolution)
+            {
+                currentResolution = maxResolution;
+            }
+            SetRenderResolution(currentResolution);
+        }
+        void DecreaseResolution()
+        {
+            currentResolution -= resolutionStep;
+            if (currentResolution < minResolution)
+            {
+                currentResolution = minResolution;
+            }
+            SetRenderResolution(currentResolution);
+        }
+        void SetRenderResolution(float resolution)
+        {
+            XRSettings.eyeTextureResolutionScale = resolution;
         }
 
         private IEnumerator FindSkeletonVisualGameObjects()
